@@ -5,6 +5,7 @@
  - [Adafruit_AMG88xx_python](https://github.com/adafruit/Adafruit_AMG88xx_python)
  - [TFT Display](https://github.com/nopnop2002/Raspberry-ili9325)
  - [Display IC reader](https://github.com/nopnop2002/Raspberry_LCD_ID_Reader)
+ - [ili9341](https://github.com/sammyizimmy/ili9341)
  - [blynk-library-python](https://github.com/blynkkk/lib-python)
  - [vshymanskyy_blynk-library-python](https://github.com/vshymanskyy/blynk-library-python)
 
