@@ -1,5 +1,7 @@
 # forest-fire_detection
 
+## Circuit diagram
+ ![circuit diagram](https://github.com/gharishkumar/forest-fire_detection/raw/main/forest_fire_detection_layout_bb.png)
 ## Modules used
  - [Adafruit_Python_GPIO](https://github.com/adafruit/Adafruit_Python_GPIO)
  - [Adafruit_AMG88xx_python](https://github.com/adafruit/Adafruit_AMG88xx_python)
