@@ -10,8 +10,10 @@
  - [ili9341](https://github.com/sammyizimmy/ili9341)
  - [blynk-library-python](https://github.com/blynkkk/lib-python)
  - [vshymanskyy_blynk-library-python](https://github.com/vshymanskyy/blynk-library-python)
+ - [gpsd gpsd-clients](https://gpsd.gitlab.io/gpsd/client-howto.html)
 
 ## Reference
  - [sensor-output](https://learn.adafruit.com/adafruit-amg8833-8x8-thermal-camera-sensor/python-circuitpython)
  - [display](https://www.raspberrypi.org/forums/viewtopic.php?t=257517)
  - [blynk-python_notify](https://github.com/vshymanskyy/blynk-library-python/blob/master/examples/tweet_notify.py)
+ - [gps](https://maker.pro/raspberry-pi/tutorial/how-to-read-gps-data-with-python-on-a-raspberry-pi)
