@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from Adafruit_AMG88xx import Adafruit_AMG88xx
 import pygame
 import os
@@ -6,10 +7,12 @@ import time
 import serial
 import numpy as np
 from scipy.interpolate import griddata
-
+from gpiozero import DigitalInputDevice, DigitalOutputDevice
 from colour import Color
 
 import BlynkLib
+mq_sensor = DigitalInputDevice(22)
+sprinkler = DigitalOutputDevice(23)
 
 BLYNK_AUTH = 'QYKFKq67HwiDCzGcs3D3DpHPA3wMBGE9'
 
@@ -36,7 +39,7 @@ def formatDegreesMinutes(coordinates, digits):
 MINTEMP = 26
 
 #high range of the sensor (this will be red on the screen)
-MAXTEMP = 32
+MAXTEMP = 42
 
 #how many color values we can have
 COLORDEPTH = 1024
@@ -84,44 +87,47 @@ def map(x, in_min, in_max, out_min, out_max):
 #let the sensor initialize
 time.sleep(.1)
 state = 0
-latitude = 0
-longitude = 0
+latitude = 0.0
+longitude = 0.0
 while(1):
-    blynk.run()
-    data = gps.readline()
-    message = data[0:6]
-    if (message == "$GPRMC"):
-        parts = data.split(",")
-        if parts[2] == 'V':
-            print("GPS receiver warning")
+    try:
+        blynk.run()
+
+        print(sensor.readThermistor())
+        if sensor.readThermistor() > 40.0 and mq_sensor.value == 1 and state == 0:
+            print("Fire Alert")
+            blynk.virtual_write(0, 1, latitude, longitude, "Fire_location")
+            blynk.notify("Fire Alert")
+            sprinkler.on()
+            state = 1
+        elif sensor.readThermistor() < 40.0:
+            sprinkler.off()
+            state = 0
+        data = gps.readline()
+        data_str = data.decode('ascii')
+        message = data[0:6]
+        if (message == "$GPRMC"):
+            parts = data.split(",")
+            if parts[2] == "V":
+                print("GPS receiver warning")
+            else:
+                longitude = float(formatDegreesMinutes(parts[5], 3))
+                latitude = float(formatDegreesMinutes(parts[3], 2))
+                print("Your position: lon = " + str(longitude) + ", lat = " + str(latitude))
         else:
-            # Get the position data that was transmitted with the GPRMC message
-            # In this example, I'm only interested in the longitude and latitude
-            # for other values, that can be read, refer to: http://aprs.gids.nl/nmea/#rmc
-            longitude = formatDegreesMinutes(parts[5], 3)
-            latitude = formatDegreesMinutes(parts[3], 2)
-            print("Your position: lon = " + str(longitude) + ", lat = " + str(latitude))
-    else:
-        # Handle other NMEA messages and unsupported strings
-        pass
-    print(sensor.readThermistor())
-    if sensor.readThermistor() > 40.0 and state == 0:
-        print("Fire Alert")
-        blynk.virtual_write(0, 1, latitude, longitude, "Fire_location")
-        blynk.notify("Fire Alert")
-        state = 1
-    elif sensor.readThermistor() < 40.0:
-        state = 0
-    #read the pixels
-    pixels = sensor.readPixels()
-    pixels = [map(p, MINTEMP, MAXTEMP, 0, COLORDEPTH - 1) for p in pixels]
+            pass
+        #read the pixels
+        pixels = sensor.readPixels()
+        pixels = [map(p, MINTEMP, MAXTEMP, 0, COLORDEPTH - 1) for p in pixels]
 
-    #perdorm interpolation
-    bicubic = griddata(points, pixels, (grid_x, grid_y), method='cubic')
+        #perdorm interpolation
+        bicubic = griddata(points, pixels, (grid_x, grid_y), method='cubic')
 
-    #draw everything
-    for ix, row in enumerate(bicubic):
-        for jx, pixel in enumerate(row):
-            pygame.draw.rect(lcd, colors[constrain(int(pixel), 0, COLORDEPTH- 1)], (displayPixelHeight * ix, displayPixelWidth * jx, displayPixelHeight, displayPixelWidth))
+        #draw everything
+        for ix, row in enumerate(bicubic):
+            for jx, pixel in enumerate(row):
+                pygame.draw.rect(lcd, colors[constrain(int(pixel), 0, COLORDEPTH- 1)], (displayPixelHeight * ix, displayPixelWidth * jx, displayPixelHeight, displayPixelWidth))
 
-    pygame.display.update()
+        pygame.display.update()
+    except Exception as e:
+        print(e)
