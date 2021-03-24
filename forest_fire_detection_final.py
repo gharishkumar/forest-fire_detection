@@ -3,7 +3,7 @@ import pygame
 import os
 import math
 import time
-
+from gps import *
 import numpy as np
 from scipy.interpolate import griddata
 
@@ -16,6 +16,7 @@ BLYNK_AUTH = 'QYKFKq67HwiDCzGcs3D3DpHPA3wMBGE9'
 # initialize Blynk
 blynk = BlynkLib.Blynk(BLYNK_AUTH)
 
+gpsd = gps(mode=WATCH_ENABLE|WATCH_NEWSTYLE)
 #low range of the sensor (this will be blue on the screen)
 MINTEMP = 26
 
@@ -70,9 +71,19 @@ time.sleep(.1)
 state = 0
 while(1):
     blynk.run()
+    nx = gpsd.next()
+    # For a list of all supported classes and fields refer to:
+    # https://gpsd.gitlab.io/gpsd/gpsd_json.html
+    if nx['class'] == 'TPV':
+        latitude = getattr(nx,'lat', "Unknown")
+        longitude = getattr(nx,'lon', "Unknown")
+        print("Your position: lon = " + str(longitude) + ", lat = " + str(latitude))
+    else:
+        print("No GPS data")
     print(sensor.readThermistor())
     if sensor.readThermistor() > 40.0 and state == 0:
         print("Fire Alert")
+        blynk.virtual_write(0, 1, lat, lon, "Fire_location")
         blynk.notify("Fire Alert")
         state = 1
     elif sensor.readThermistor() < 40.0:
