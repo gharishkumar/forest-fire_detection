@@ -3,7 +3,7 @@ import pygame
 import os
 import math
 import time
-from gps import *
+import serial
 import numpy as np
 from scipy.interpolate import griddata
 
@@ -16,7 +16,22 @@ BLYNK_AUTH = 'QYKFKq67HwiDCzGcs3D3DpHPA3wMBGE9'
 # initialize Blynk
 blynk = BlynkLib.Blynk(BLYNK_AUTH)
 
-gpsd = gps(mode=WATCH_ENABLE|WATCH_NEWSTYLE)
+
+SERIAL_PORT = "/dev/serial0"
+gps = serial.Serial(SERIAL_PORT, baudrate = 9600, timeout = 0.5)
+
+def formatDegreesMinutes(coordinates, digits):
+    parts = coordinates.split(".")
+    if (len(parts) != 2):
+        return coordinates
+    if (digits > 3 or digits < 2):
+        return coordinates
+    left = parts[0]
+    right = parts[1]
+    degrees = str(left[:digits])
+    minutes = str(right[:3])
+    return degrees + "." + minutes
+
 #low range of the sensor (this will be blue on the screen)
 MINTEMP = 26
 
@@ -69,21 +84,30 @@ def map(x, in_min, in_max, out_min, out_max):
 #let the sensor initialize
 time.sleep(.1)
 state = 0
+latitude = 0
+longitude = 0
 while(1):
     blynk.run()
-    nx = gpsd.next()
-    # For a list of all supported classes and fields refer to:
-    # https://gpsd.gitlab.io/gpsd/gpsd_json.html
-    if nx['class'] == 'TPV':
-        latitude = getattr(nx,'lat', "Unknown")
-        longitude = getattr(nx,'lon', "Unknown")
-        print("Your position: lon = " + str(longitude) + ", lat = " + str(latitude))
+    data = gps.readline()
+    message = data[0:6]
+    if (message == "$GPRMC"):
+        parts = data.split(",")
+        if parts[2] == 'V':
+            print("GPS receiver warning")
+        else:
+            # Get the position data that was transmitted with the GPRMC message
+            # In this example, I'm only interested in the longitude and latitude
+            # for other values, that can be read, refer to: http://aprs.gids.nl/nmea/#rmc
+            longitude = formatDegreesMinutes(parts[5], 3)
+            latitude = formatDegreesMinutes(parts[3], 2)
+            print("Your position: lon = " + str(longitude) + ", lat = " + str(latitude))
     else:
-        print("No GPS data")
+        # Handle other NMEA messages and unsupported strings
+        pass
     print(sensor.readThermistor())
     if sensor.readThermistor() > 40.0 and state == 0:
         print("Fire Alert")
-        blynk.virtual_write(0, 1, lat, lon, "Fire_location")
+        blynk.virtual_write(0, 1, latitude, longitude, "Fire_location")
         blynk.notify("Fire Alert")
         state = 1
     elif sensor.readThermistor() < 40.0:
