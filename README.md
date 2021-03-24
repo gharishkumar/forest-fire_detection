@@ -86,3 +86,4 @@
  - [display driver](https://www.waveshare.com/wiki/3.5inch_RPi_LCD_(A))
  - [blynk-python_notify](https://github.com/vshymanskyy/blynk-library-python/blob/master/examples/tweet_notify.py)
  - [gps](https://maker.pro/raspberry-pi/tutorial/how-to-read-gps-data-with-python-on-a-raspberry-pi)
+ - [gps robo.in](https://robu.in/interfacing-of-gps-module-with-arduino-and-raspberry-pi/)
