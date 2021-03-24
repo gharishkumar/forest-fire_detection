@@ -68,6 +68,8 @@
 <td> TP_CS </td>
 <td> Touch Panel chip selection, low active
 </td></tr></tbody></table>
+
+
 ## Modules used
  - [Adafruit_Python_GPIO](https://github.com/adafruit/Adafruit_Python_GPIO)
  - [Adafruit_AMG88xx_python](https://github.com/adafruit/Adafruit_AMG88xx_python)
